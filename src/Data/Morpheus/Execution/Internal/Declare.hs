@@ -11,6 +11,7 @@
 module Data.Morpheus.Execution.Internal.Declare
   ( declareType
   , tyConArgs
+  , Scope (..)
   )
 where
 
@@ -67,9 +68,11 @@ tyConArgs :: DataTypeKind -> [Key]
 tyConArgs kindD | isOutputObject kindD || kindD == KindUnion = [m_]
                 | otherwise = []
 
+data Scope = CLIENT | SERVER
+
 -- declareType
-declareType :: Bool -> Maybe DataTypeKind -> [Name] -> TypeD -> Dec
-declareType namespace kindD derivingList TypeD { tName, tCons, tNamespace } =
+declareType :: Scope -> Bool -> Maybe DataTypeKind -> [Name] -> TypeD -> Dec
+declareType scope namespace kindD derivingList TypeD { tName, tCons, tNamespace } =
   DataD [] (genName tName) tVars Nothing (map cons tCons)
     $ map derive (''Generic : derivingList)
  where

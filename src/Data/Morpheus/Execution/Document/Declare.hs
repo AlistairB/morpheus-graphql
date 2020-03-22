@@ -23,18 +23,20 @@ import           Data.Morpheus.Execution.Document.Introspect
                                                 , instanceIntrospect
                                                 )
 import           Data.Morpheus.Execution.Internal.Declare
-                                                ( declareType )
+                                                ( declareType
+                                                , Scope(..)
+                                                )
 import           Data.Morpheus.Types.Internal.AST
                                                 ( isInput
                                                 , isObject
                                                 , GQLTypeD(..)
                                                 )
 
-declareTypes :: Bool -> [GQLTypeD] -> Q [Dec]
-declareTypes namespace = fmap concat . traverse (declareGQLType namespace)
+declareTypes :: Scope -> Bool -> [GQLTypeD] -> Q [Dec]
+declareTypes scope namespace = fmap concat . traverse (declareGQLType namespace scope)
 
-declareGQLType :: Bool -> GQLTypeD -> Q [Dec]
-declareGQLType namespace gqlType@GQLTypeD { typeD, typeKindD, typeArgD, typeOriginal }
+declareGQLType :: Scope -> Bool -> GQLTypeD -> Q [Dec]
+declareGQLType scope namespace gqlType@GQLTypeD { typeD, typeKindD, typeArgD, typeOriginal }
   = do
     mainType        <- declareMainType
     argTypes        <- declareArgTypes
@@ -60,11 +62,11 @@ declareGQLType namespace gqlType@GQLTypeD { typeD, typeKindD, typeArgD, typeOrig
    where
     deriveArgsRep args = deriveObjectRep (args, Nothing)
     ----------------------------------------------------
-    argsTypeDecs = map (declareType namespace Nothing []) typeArgD
+    argsTypeDecs = map (declareType scope namespace Nothing []) typeArgD
       --------------------------------------------------
   declareMainType = declareT
    where
     declareT =
-      pure [declareType namespace (Just typeKindD) derivingClasses typeD]
+      pure [declareType scope namespace (Just typeKindD) derivingClasses typeD]
     derivingClasses | isInput typeKindD = [''Show]
                     | otherwise         = []
